@@ -1,0 +1,87 @@
+import requests   # for http requests
+import io         # for write files
+import re         # for Regular Expressionsfrom bs4 import BeautifulSoup        #to parse html document
+from bs4 import BeautifulSoup        #to parse html document
+
+page = requests.get("https://laventananatural.com/mapa/#marker910")
+
+print page.content
+
+soup = BeautifulSoup(page.content, 'html.parser')
+
+
+
+def p(x):
+  
+    print "********"
+    print x
+    return
+
+    print type(x)
+    if type(x) == list:
+        map(lambda d: p(d),x)
+        
+    else:
+        print x
+    
+    print "---------"
+   
+     
+def merge_two_dicts(x, y):
+    z = x.copy()   # start with x's keys and values
+    z.update(y)    # modifies z with y's keys and values & returns None
+    return z
+ 
+
+    
+        
+
+#print(soup.prettify())
+
+ 
+#print soup.select("table")  
+
+#CABECERAS = map(lambda x: x.getText(), soup.select ('table[id="wpgmza_table_1"] thead th') )
+CABECERAS = [u'N', u'Titulo', u'Categoria', u'Direccion', u'Descripcion']
+#print CABECERAS
+
+
+
+
+#soup.select ('table[class*="wpgmza_table"]')
+FILAS = soup.select ('table[id="wpgmza_table_1"] tbody tr')
+
+ 
+
+#map(lambda x: p(x),FILAS)
+
+
+def scrap(fila):
+    #print fila
+    
+    return reduce((lambda x, y:  merge_two_dicts(x,y)    ), map(lambda (i,x): {CABECERAS[i]: fila.find_all('td')[i].text}  , enumerate(CABECERAS) ) )
+    
+ 
+
+
+FILAS_DATOS = map(lambda x: scrap(x),FILAS)
+#map(lambda x:p(x), FILAS_DATOS);
+
+#p(FILAS_DATOS)
+
+with io.open('laventananatural.csv', 'w',closefd=True) as file:
+    #Write the headers in quotes and separated by;   
+    file.write(
+                    unicode(";".join(map(lambda campo: '"'+ re.sub(r'^\s+', "", campo ) +'"' , CABECERAS)+["\n"]))
+              )   
+               
+    #Write the data in quotes and separated by;
+    
+ 
+    
+    
+    map(lambda fila: file.write(
+                            ";".join(map(lambda campo: '"'+  re.sub(r'\n',"<br>",fila[campo])+'"' , CABECERAS)+["\n"])
+        
+                               ),      
+     FILAS_DATOS)
